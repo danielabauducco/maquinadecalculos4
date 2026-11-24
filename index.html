@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Máquina de las Transformaciones</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#101d4b;color:#102957}
+body{display:flex;justify-content:center;padding:20px}
+.app{width:min(1536px,100vw);}
+.machine{
+position:relative;width:100%;aspect-ratio:1536/1024;overflow:hidden;
+border-radius:34px;border:8px solid #173b47;
+background:linear-gradient(180deg,#e6faff 0%,#b8e7ef 48%,#79c7d3 100%);
+box-shadow:inset 0 0 0 6px #55c5df,0 12px 0 #0d6873
+}
+.machine:before{
+content:"MÁQUINA DE LAS TRANSFORMACIONES";
+position:absolute;left:7%;top:8%;width:86%;padding:12px 8px;text-align:center;
+border-radius:999px;background:#173b47;color:#fffdf8;
+font-size:clamp(14px,2vw,28px);font-weight:1000;letter-spacing:1px
+}
+.machine:after{
+content:"🚀";position:absolute;left:7%;bottom:7%;
+font-size:clamp(32px,6vw,76px)
+}
+.overlay{position:absolute}
+.cell{
+position:absolute;width:13.42%;height:15.25%;background:#fff5dc;
+border:3px solid #168d96;display:flex;align-items:center;justify-content:center;
+color:#102957;font-size:clamp(34px,5.2vw,72px);font-weight:1000;line-height:1;
+text-shadow:0 2px 0 white;box-shadow:0 5px 0 rgba(13,104,115,.22)
+}
+.c1{left:33.27%;top:39.15%;border-radius:18px 0 0 0}
+.c2{left:46.68%;top:39.15%}
+.c3{left:60.09%;top:39.15%;border-radius:0 18px 0 0}
+.c4{left:33.27%;top:54.75%;border-radius:0 0 0 18px}
+.c5{left:46.68%;top:54.75%}
+.c6{left:60.09%;top:54.75%;border-radius:0 0 18px 0}
+.op{
+position:absolute;left:24.9%;top:39.15%;width:8.4%;height:30.85%;
+border-radius:18px;background:#fff5dc;border:3px solid #168d96;
+display:flex;align-items:center;justify-content:center;font-size:0;
+box-shadow:0 5px 0 rgba(13,104,115,.22)
+}
+.op::after{
+content:"";width:58%;aspect-ratio:1;border-radius:16px;background:#f58b22;
+border:4px solid #fff;box-shadow:0 4px 0 #c96816
+}
+.op.plus::before,.op.minus::before{
+position:absolute;z-index:2;color:#fff;font-size:clamp(30px,4vw,58px);
+font-weight:1000;line-height:1
+}
+.op.plus::before{content:"+"}
+.op.minus::before{content:"−"}
+.spin{
+position:absolute;left:27.3%;top:77.4%;width:45.6%;height:15.5%;
+border:5px solid #fff;background:#f3a13a;color:#fff;
+font-size:clamp(13px,2vw,25px);font-weight:1000;cursor:pointer;
+border-radius:40px;padding:0;box-shadow:0 7px 0 #c96816
+}
+.spin:after{content:"GIRAR LA MÁQUINA 🚀"}
+.spin:disabled{cursor:wait;opacity:.65}
+.status{
+position:absolute;left:30%;top:71.8%;width:40%;height:5%;
+display:flex;align-items:center;justify-content:center;color:#102957;
+font-size:clamp(10px,1.15vw,17px);font-weight:1000;
+letter-spacing:.5px;text-align:center
+}
+.challenge{display:none;margin:20px auto 0;width:min(900px,92vw);background:#fff5dc;border:5px solid #f2dca8;border-radius:28px;padding:20px;box-shadow:0 7px 0 #0d6873;text-align:center}
+.challenge.show{display:block}
+.expression{font-size:clamp(28px,5vw,48px);font-weight:1000;margin:8px 0 16px;color:#102957}
+.answer{display:flex;justify-content:center;gap:10px}
+.answer input{width:180px;max-width:45vw;border:4px solid #168d96;border-radius:16px;background:white;color:#102957;font-size:30px;font-weight:900;text-align:center;padding:8px}
+.answer button{width:62px;border:3px solid white;border-radius:16px;background:#76b82a;color:white;font-size:28px;font-weight:1000;box-shadow:0 4px 0 #55891d;cursor:pointer}
+.feedback{margin-top:12px;font-size:17px;font-weight:1000}
+.correct{color:#4d8d1b} .wrong{color:#d45b22}
+.discovery{display:none;margin-top:15px;padding:15px;border:3px solid #1d9fc6;border-radius:18px;background:#eef9f6;font-weight:900}
+.discovery.show{display:block}
+@media(max-width:600px){
+ body{padding:5px}
+ .machine{min-width:0}
+ .cell{border-width:2px}
+ .op{border-width:3px;box-shadow:0 3px 0 #c96816}
+ .spin{font-size:16px}
+ .status{font-size:8px}
+}
+</style>
+
+
+
+<script>
+/*
+  CONEXIÓN CON GOOGLE SHEETS
+  Pegá aquí la URL de tu Web App de Google Apps Script.
+*/
+
+
+function registrarRespuesta(datos) { /* registro externo desactivado */ }
+
+</script>
+
+</head>
+<body>
+<div class="app">
+
+
+  <div class="machine" aria-label="Máquina de las transformaciones">
+    <div id="h" class="overlay cell c1">1</div>
+    <div id="t" class="overlay cell c2">2</div>
+    <div id="o" class="overlay cell c3">4</div>
+    <div id="oh" class="overlay cell c4">0</div>
+    <div id="ot" class="overlay cell c5">2</div>
+    <div id="oo" class="overlay cell c6">3</div>
+
+    <div id="op" class="overlay op">+</div>
+    <div id="status" class="status">¡PREPARAMOS LA NAVE PARA DESCUBRIR EL PAR!</div>
+    <button id="spin" class="spin" aria-label="Hacer girar la máquina"></button>
+  </div>
+
+  <section id="challenge" class="challenge">
+    <div>AHORA RESOLVÉ LA TRANSFORMACIÓN</div>
+    <div id="expression" class="expression">124 + 23 = ?</div>
+    <div class="answer">
+      <input id="answer" type="number" min="0" max="150" placeholder="?">
+      <button id="check">✓</button>
+    </div>
+    <div id="feedback" class="feedback"></div>
+    <div id="discovery" class="discovery"></div>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let current=null,busy=false;
+
+function digits(n){
+  return {h:Math.floor(n/100),t:Math.floor((n%100)/10),o:n%10};
+}
+
+function possibleOperations(n){
+  const d=digits(n),ops=[];
+  for(let k=10;k<=99;k++){
+    const kd=digits(k);
+    if(n+k<=150 && d.o+kd.o<=9 && d.t+kd.t<=9)
+      ops.push({symbol:"+",value:k,result:n+k});
+    if(n-k>=1 && d.o>=kd.o && d.t>=kd.t)
+      ops.push({symbol:"−",value:k,result:n-k});
+  }
+  return ops;
+}
+
+function makeChallenge(){
+  let n,ops;
+  do{
+    n=Math.floor(Math.random()*150)+1;
+    ops=possibleOperations(n);
+  }while(!ops.length);
+  return {n,op:ops[Math.floor(Math.random()*ops.length)]};
+}
+
+function spin(el,final,delay){
+  return new Promise(resolve=>{
+    let i=0;
+    const timer=setInterval(()=>{
+      el.textContent=Math.floor(Math.random()*10);
+      i++;
+      if(i>=15){
+        clearInterval(timer);
+        el.textContent=final;
+        resolve();
+      }
+    },55+delay);
+  });
+}
+
+function decomposition(n){
+  const d=digits(n),p=[];
+  if(d.h)p.push(d.h+" CIEN"+(d.h===1?"":"ES"));
+  if(d.t)p.push(d.t+" DIEZ"+(d.t===1?"":"CES"));
+  if(d.o)p.push(d.o+" UNO"+(d.o===1?"":"S"));
+  return p.join(" + ")||"0";
+}
+
+async function start(){
+  if(busy)return;
+  busy=true;
+  current=makeChallenge();
+
+  $("spin").disabled=true;
+  $("challenge").classList.remove("show");
+  $("discovery").classList.remove("show");
+  $("feedback").textContent="";
+  $("answer").value="";
+  $("status").textContent="¡LA MÁQUINA ESTÁ GIRANDO…!";
+
+  const a=digits(current.n), b=digits(current.op.value);
+  $("op").textContent="";
+  $("op").classList.remove("plus","minus");
+  $("op").classList.add(current.op.symbol === "+" ? "plus" : "minus");
+
+  await Promise.all([
+    spin($("h"),a.h,0),
+    spin($("t"),a.t,8),
+    spin($("o"),a.o,16),
+    spin($("oh"),b.h,4),
+    spin($("ot"),b.t,12),
+    spin($("oo"),b.o,20)
+  ]);
+
+  $("status").textContent="¡PAR DE NÚMEROS DESCUBIERTO! 🚀";
+  setTimeout(()=>{
+    $("expression").textContent=`${current.n} ${current.op.symbol} ${current.op.value} = ?`;
+    $("challenge").classList.add("show");
+    $("status").textContent="PENSÁ… ¿A QUÉ NÚMERO LLEGAMOS?";
+    $("spin").disabled=false;
+    busy=false;
+    $("answer").focus();
+  },350);
+}
+
+function check(){
+  if(!current)return;
+  const v=Number($("answer").value);
+  if(v===current.op.result){
+    registrarRespuesta({
+      numeroInicial: current.n,
+      operacion: current.op.symbol,
+      numeroTransformacion: current.op.value,
+      respuestaEsperada: current.op.result,
+      respuestaAlumno: v,
+      correcta: true,
+      valorPosicional: (() => {
+        const aa=digits(current.n), bb=digits(current.op.result), cc=[];
+        if(aa.h!==bb.h)cc.push("CIENES");
+        if(aa.t!==bb.t)cc.push("DIECES");
+        if(aa.o!==bb.o)cc.push("UNOS");
+        return cc.join(" Y ") || "NINGUNO";
+      })()
+    });
+    $("feedback").textContent="¡MISIÓN CUMPLIDA! 🎉";
+    $("feedback").className="feedback correct";
+    const a=digits(current.n), b=digits(current.op.result), c=[];
+    if(a.h!==b.h)c.push("CIENES");
+    if(a.t!==b.t)c.push("DIECES");
+    if(a.o!==b.o)c.push("UNOS");
+    $("discovery").innerHTML=
+      `${current.n} = ${decomposition(current.n)}<br>`+
+      `${current.op.result} = ${decomposition(current.op.result)}<br><br>`+
+      `¿QUÉ CAMBIÓ? → ${c.join(" Y ")||"NINGÚN VALOR POSICIONAL"}`;
+    $("discovery").classList.add("show");
+  }else{
+    registrarRespuesta({
+      numeroInicial: current.n,
+      operacion: current.op.symbol,
+      numeroTransformacion: current.op.value,
+      respuestaEsperada: current.op.result,
+      respuestaAlumno: v,
+      correcta: false,
+      valorPosicional: ""
+    });
+    $("feedback").textContent="TODAVÍA NO… REVISÁ LOS DIECES Y LOS UNOS.";
+    $("feedback").className="feedback wrong";
+    $("answer").select();
+  }
+}
+
+$("spin").addEventListener("click",start);
+$("check").addEventListener("click",check);
+$("answer").addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+</script>
+
+<script>
+function iniciarMision() {
+  const campo = document.getElementById("removedStudentName");
+  const nombre = campo.value.trim();
+  if (!nombre) {
+    campo.focus();
+    campo.style.borderColor = "#f3a13a";
+    return false;
+  }
+  nombreAlumno = nombre;
+  document.getElementById("removedStudentEntry").classList.add("hidden");
+  return false;
+}
+
+document.getElementById("removedStartMission").onclick = iniciarMision;
+document.getElementById("removedStudentName").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") { e.preventDefault(); iniciarMision(); }
+});
+</script>
+</body>
+</html>
